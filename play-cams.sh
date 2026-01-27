@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# logs into my nvr (reolink), grabs the auth token
+# then crafts a url by convention and opens via mpv
+
 # note, assumes you saved nvr admin pass in secret-tool
 #       assumes nvr ip is mapped to the hostname 'nvr'
 #       _sub in the url is 'fluent' (lowest quality)
