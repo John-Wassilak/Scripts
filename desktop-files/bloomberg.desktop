@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=Bloomberg
+GenericName=Live Stream
+Comment=Bloomberg Live Stream
+Exec=play-stream.sh ~/scripts/streams/bloomberg.strm
+Icon=bloomberg
+Terminal=false
+Type=Application
+Categories=AudioVideo;Video;Player;TV;
