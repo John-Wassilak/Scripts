@@ -19,5 +19,5 @@ on my laptop
 - [firewall.sh](firewall.sh)         : basic stateful firewall
 - [mount-crypt.sh](mount-crypt.sh)   : decrypt/mount encrypted partition
 - [play-cams.sh](play-cams.sh)       : logs into my reolink nvr and plays all feeds via mpv
-- [play-streams.sh](play-streams.sh) : wrapper script for .strm files. I tend to use this for videos mainly designed for in-browser playing. But I like using mpv...
+- [play-stream.sh](play-stream.sh) : wrapper script for .strm files. I tend to use this for videos mainly designed for in-browser playing. But I like using mpv...
 
