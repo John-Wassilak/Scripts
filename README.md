@@ -16,8 +16,10 @@ on my laptop
 
 ## Notes
 
-- [firewall.sh](firewall.sh)         : basic stateful firewall
-- [mount-crypt.sh](mount-crypt.sh)   : decrypt/mount encrypted partition
-- [play-cams.sh](play-cams.sh)       : logs into my reolink nvr and plays all feeds via mpv
+- [firewall.sh](firewall.sh) : basic stateful firewall
+- [mount-crypt.sh](mount-crypt.sh) : decrypt/mount encrypted partition
+- [play-cams.sh](play-cams.sh) : logs into my reolink nvr and plays all feeds via mpv
 - [play-streams.sh](play-streams.sh) : wrapper script for .strm files. I tend to use this for videos mainly designed for in-browser playing. But I like using mpv...
+- [gentoo-cleanup-files.sh](gentoo-cleanup-files.sh) : clean gentoo cache
+- [gentoo-update.sh](gentoo-update.sh) : gentoo update commands
 
