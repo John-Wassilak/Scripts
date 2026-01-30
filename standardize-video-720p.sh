@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <input_file> <output_file>"
+    echo "Usage: standardize-video-720p.sh <input_file> <output_file>"
     echo "hint : output should be mp4"
     exit 1
 fi

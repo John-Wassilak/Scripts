@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=Forecast
+GenericName=Forecast
+Comment=Current Weather Forecast Image
+Exec=/home/john/scripts/nws-forecast.sh
+Icon=forecast
+Terminal=false
+Type=Application
+Categories=AudioVideo;Video;Player;TV;
