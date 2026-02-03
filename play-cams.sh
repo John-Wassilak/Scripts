@@ -31,8 +31,6 @@ token_name=$(echo "$response" | jq -r '.[0].value.Token.name')
 
 for i in {0..6}; do
     nohup mpv --mute=yes --script="~/scripts/mpv/periodic-end-jump.lua" \
-          --script-opts=endjump=yes,interval=600 \
+	  --script-opts=endjump=yes,interval=600 \
 	  "http://nvr/flv?app=bcs&stream=channel${i}_sub.bcs&token=$token_name" > /dev/null 2>&1 &
 done
-
-

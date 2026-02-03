@@ -11,7 +11,7 @@ Turning over a new leaf and automating everything + triple backing up.
 
 ## Streams
 Some of the things in here are multi-media related. I have a directory of .strm files
-which play on thinks like kodi. Then there are some wrapper scripts for when I do so
+which play on things like kodi. Then there are some wrapper scripts for when I do so
 on my laptop
 
 ## Notes

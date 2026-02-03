@@ -14,8 +14,10 @@
 --
 -- note this flashes the progress bar as if I keyed ff
 
+-- massive relative seek was the most reliable way to go to the
+-- very end of a live stream
 function seek_to_end()
-   mp.command("seek 100 absolute-percent")
+   mp.command("seek 100 absolute-percent+exact")
 end
 
 -- Get 'interval' from command line or default to 300 (5 mins)
