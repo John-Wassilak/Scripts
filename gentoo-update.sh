@@ -16,8 +16,8 @@ sudo bash -c "emerge --sync && \
 echo ""
 echo "updating git repos"
 
-cd -v /home/john/packages/dms
+cd /home/john/packages/dms
 PRE_PULL=$(git rev-parse HEAD); git pull && [ "$PRE_PULL" != "$(git rev-parse HEAD)" ] && sudo make install
 
-cd -v /home/john/packages/yt-dlp
+cd /home/john/packages/yt-dlp
 git pull

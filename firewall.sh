@@ -88,3 +88,5 @@ sudo iptables -A INPUT -m addrtype --dst-type BROADCAST,MULTICAST -j DROP
 sudo iptables -A INPUT -s pi-tv -p tcp --dport 22 -j ACCEPT
 sudo iptables -A INPUT -s pi-master-tv -p tcp --dport 22 -j ACCEPT
 
+# web inbound
+sudo iptables -A INPUT -s android -p tcp --dport 80 -j ACCEPT
