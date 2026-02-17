@@ -22,19 +22,22 @@ TEMP_DIR=$(mktemp -d)
 FILE_LIST="$TEMP_DIR/file_list.txt"
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
-# Download each URL as MP3
+# Download each URL as MP3, normalize along the way
 n=1
 while IFS= read -r url; do
     echo "Downloading $url..."
     index=$(printf "%02d" "$n")
-    yt-dlp -f bestaudio --extract-audio --audio-format mp3 -o "$TEMP_DIR/${index}_%(title)s.%(ext)s" "$url"
     n=$((n + 1))
+    yt-dlp -f bestaudio --extract-audio --audio-format mp3 \
+	   --postprocessor-args "-filter:a loudnorm" -o "$TEMP_DIR/${index}_%(title)s.%(ext)s" "$url" || {
+        echo "Error with $url: Skipping to the next video."
+        continue
+    }
 done < "$URL_FILE"
 
-# Collect the downloaded mp3 file names
+# Collect file names for concat
 for file in "$TEMP_DIR"/*.mp3; do
     echo "file '$file'" >> "$FILE_LIST"
-    MP3_FILES+=" $file"
 done
 
 # Concatenate MP3 files using ffmpeg with the file list

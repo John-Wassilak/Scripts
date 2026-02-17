@@ -27,6 +27,7 @@ on my laptop
 - [play-cams.sh](play-cams.sh) : logs into my reolink nvr and plays all feeds via mpv
 - [play-stream.sh](play-stream.sh) : wrapper script for .strm files. I tend to use this for videos mainly designed for in-browser playing. But I like using mpv...
 - [standardize-video-720p.sh](standardize-video-720p.sh) : complicated ffmpeg filter to basically do what the title says.
+- [download-and-concat-mp3.sh](download-and-concat-mp3.sh) : given a list of youtube urls or ids, downloads audio, normalizes, and concats into a single mp3.
 - [mpv/auto-refresh.lua](mpv/auto-refresh.lua) : mpv extension to allow me to loop media(typically gifs) but then periodically refresh from the source.
 - [mpv/periodic-end-jump.lua](mpv/periodic-end-jump.lua) : mpv extension to periodically fast-forward to the end (streams like camera feeds)
 
@@ -34,3 +35,5 @@ on my laptop
 - [nws-forecast.sh](nws-forecast.sh) : Pulls a detailed forecast plot image from the National Weather Service
 - [nws-radar.sh](nws-radar.sh) : Displays a radar loop from the National Weather Service. Updating every 5mins.
 
+### Productivity?
+- [khal_alert.sh](khal_alert.sh) : Checks khal calendars for something starting in the next x minutes, fires a libnotify alert if so.
