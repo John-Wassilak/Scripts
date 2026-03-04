@@ -1,6 +1,6 @@
 #!/bin/bash
 
-QUOTES_FILE="/home/john/quotes"
+QUOTES_FILE="/mnt/crypt/john/nextcloud/config/quotes"
 
 if [ ! -f "$QUOTES_FILE" ]; then
     echo "Error: Quotes file not found at $QUOTES_FILE"

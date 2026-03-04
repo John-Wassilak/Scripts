@@ -23,13 +23,16 @@ FILE_LIST="$TEMP_DIR/file_list.txt"
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
 # Download each URL as MP3, normalize along the way
+# normalize + compress (-filter:a "acompressor=threshold=-20dB:ratio=4:attack=5:release=50")
+# + limit -filter:a "alimiter=limit=0.5" + noise reduction (-filter:a "afftdn")
 n=1
 while IFS= read -r url; do
     echo "Downloading $url..."
     index=$(printf "%02d" "$n")
     n=$((n + 1))
     yt-dlp -f bestaudio --extract-audio --audio-format mp3 \
-	   --postprocessor-args "-filter:a loudnorm" -o "$TEMP_DIR/${index}_%(title)s.%(ext)s" "$url" || {
+           --postprocessor-args "-filter:a 'loudnorm,acompressor=threshold=-20dB:ratio=4:attack=5:release=50,afftdn'" \
+           -o "$TEMP_DIR/${index}_%(title)s.%(ext)s" "$url" || {
         echo "Error with $url: Skipping to the next video."
         continue
     }
