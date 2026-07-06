@@ -2,14 +2,14 @@
 
 # by the time I'm done updating these, theres a new
 # version, so only doing that periodically
-EXCLUDE="--exclude chromium"
+EXCLUDE="--exclude chromium --exclude firefox --exclude libreoffice"
 
 if [[ "$1" == "all" ]]; then
     EXCLUDE=""
 fi
 
 sudo bash -c "emerge --sync && \
-              emerge --ask --update --deep --newuse $EXCLUDE @world && \
+              emerge --ask --update --deep --newuse --keep-going $EXCLUDE @world && \
               emerge --depclean && \
               revdep-rebuild"
 

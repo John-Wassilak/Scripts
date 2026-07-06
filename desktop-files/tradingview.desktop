@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=TradingView
+GenericName=TradingView
+Comment=Analysis platform for traders and investors
+Exec=/mnt/crypt/john/tradingview/opt/TradingView/tradingview
+Icon=tradingview
+Terminal=false
+Type=Application
+Categories=Trading;Finance;
