@@ -34,4 +34,4 @@ else
 fi
 
 
-mpv $url
+mpv --ytdl-format=best $url
