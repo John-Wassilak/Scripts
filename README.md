@@ -25,8 +25,9 @@ on my laptop
 
 ### Multimedia
 - [play-cams.sh](play-cams.sh) : logs into my reolink nvr and plays all feeds via mpv
+- [tile-cams.sh](tile-cams.sh) : arranges the mpv windows from play-cams.sh into a grid in awesome
 - [play-stream.sh](play-stream.sh) : wrapper script for .strm files. I tend to use this for videos mainly designed for in-browser playing. But I like using mpv...
-- [standardize-video-720p.sh](standardize-video-720p.sh) : complicated ffmpeg filter to basically do what the title says.
+- [standardize-video.sh](standardize-video.sh) : normalizes a media library to a target resolution H.264/AAC mp4
 - [download-and-concat-mp3.sh](download-and-concat-mp3.sh) : given a list of youtube urls or ids, downloads audio, normalizes, and concats into a single mp3.
 - [mpv/auto-refresh.lua](mpv/auto-refresh.lua) : mpv extension to allow me to loop media(typically gifs) but then periodically refresh from the source.
 - [mpv/periodic-end-jump.lua](mpv/periodic-end-jump.lua) : mpv extension to periodically fast-forward to the end (streams like camera feeds)
