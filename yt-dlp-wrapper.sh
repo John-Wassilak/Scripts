@@ -1,6 +1,7 @@
 #!/bin/bash
 
-ytdlp="/home/john/packages/yt-dlp/yt-dlp.sh"
+#ytdlp="/home/john/packages/yt-dlp/yt-dlp.sh"
+ytdlp="yt-dlp"
 
 # Function to download videos using yt-dlp
 download() {
