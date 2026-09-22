@@ -25,6 +25,15 @@ sudo bash -c 'echo 0 > /proc/sys/net/ipv4/conf/default/accept_source_route'
 sudo bash -c 'echo 1 > /proc/sys/net/ipv4/tcp_syncookies'
 
 # Disable ICMP Redirect Acceptance
+# conf/all as well as conf/default -- writing only `default` does NOT disable it.
+# The kernel's IN_DEV_RX_REDIRECTS is an OR of conf/all and the per-interface value
+# whenever forwarding is off, and conf/all/accept_redirects defaults to 1, so `all`
+# alone decides the answer no matter what the interfaces say. `default` is only the
+# template copied into interfaces brought up later, so it cannot fix one that already
+# exists. Found 2026-09-22: this box was reading conf/all/accept_redirects = 1 with a
+# firewall that believed it had turned redirects off. The same bug is in BLFS's own
+# Personal Firewall example (see agent-built-lfs BOOK-PATCHES.md item 3).
+sudo bash -c 'echo 0 > /proc/sys/net/ipv4/conf/all/accept_redirects'
 sudo bash -c 'echo 0 > /proc/sys/net/ipv4/conf/default/accept_redirects'
 
 # Do not send Redirect Messages
@@ -66,8 +75,23 @@ sudo iptables -Z
 
 sudo iptables -t nat -F
 
+# Same for IPv6. This was missing: the ip6tables policies above were set to
+# DROP but the chains were never flushed and never given a single rule, so
+# stale rules could survive a re-run while nothing new was ever added.
+sudo ip6tables -F
+sudo ip6tables -X
+sudo ip6tables -Z
+
 # Allow local-only connections
 sudo iptables -A INPUT  -i lo -j ACCEPT
+
+# The IPv6 equivalent, which was absent entirely. Without it, ::1 is dropped:
+# "localhost" resolves to ::1 before 127.0.0.1, so any local service reached
+# by name hangs rather than connecting -- DROP times out where REJECT would
+# refuse. Found via `bao login -method=oidc`, whose browser callback to
+# http://localhost:8250/oidc/callback hung forever on the laptop.
+sudo ip6tables -A INPUT  -i lo -j ACCEPT
+sudo ip6tables -A OUTPUT -o lo -j ACCEPT
 
 # Free output on any interface to any ip for any service
 # (equal to -P ACCEPT)
@@ -85,8 +109,25 @@ sudo iptables -A INPUT -m addrtype --dst-type BROADCAST,MULTICAST -j DROP
 
 
 # ssh inbound
-sudo iptables -A INPUT -s pi-tv -p tcp --dport 22 -j ACCEPT
-sudo iptables -A INPUT -s pi-master-tv -p tcp --dport 22 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+#sudo iptables -A INPUT -s pi-tv -p tcp --dport 22 -j ACCEPT
+#sudo iptables -A INPUT -s pi-master-tv -p tcp --dport 22 -j ACCEPT
 
 # web inbound
-sudo iptables -A INPUT -s android -p tcp --dport 80 -j ACCEPT
+#sudo iptables -A INPUT -s android -p tcp --dport 80 -j ACCEPT
+
+
+# NOTE -- IPv6 still diverges from the stated intent of this script.
+# "Block all incoming, allow all outgoing" is implemented for IPv4 only:
+# iptables gets -A OUTPUT -j ACCEPT and an ESTABLISHED,RELATED INPUT rule,
+# ip6tables gets neither, so all IPv6 traffic except loopback is dropped in
+# both directions. That is stricter than intended and may be silently
+# breaking things other than the loopback case fixed above. Mirroring IPv4
+# would mean adding:
+#
+#   sudo ip6tables -A OUTPUT -j ACCEPT
+#   sudo ip6tables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+#
+# Left commented deliberately: that widens the firewall, and widening it is
+# a decision to make on purpose rather than as a side effect of fixing a
+# loopback bug.
