@@ -17,7 +17,10 @@ on my laptop
 ## Notes
 
 ### OS Stuff
-- [firewall.sh](firewall.sh) : basic stateful firewall
+- [firewall.sh](firewall.sh) : the documented firewall posture -- every rule next to why it
+  exists -- plus `check` (does the running kernel still match?), `show` and a guarded
+  `apply`. Not what loads the rules at boot: iptables.service does that from
+  /etc/systemd/scripts/iptables, which `agent-built-lfs` generates.
 - [mount-crypt.sh](mount-crypt.sh) : decrypt/mount encrypted partition
 - [mount-ssh.sh](mount-ssh.sh) : mount remote drives via ssh
 - [gentoo-cleanup-files.sh](gentoo-cleanup-files.sh) : clean gentoo cache

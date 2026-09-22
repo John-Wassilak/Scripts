@@ -104,6 +104,36 @@ STEREO=1                   # downmix surround to stereo; --keep-surround disable
 # limiter at -1 dBFS: -19.1 LUFS against the source's -19.8, peak -1.00, and
 # LRA unchanged at 17.7 -- the limiter barely engages, so dynamics survive.
 
+# EDIT LISTS -- why this script pads instead of passing timestamps through.
+#
+# An mp4 track can declare that it starts late, with an edit list entry whose
+# media_time is -1 (an "empty edit"). Its segment_duration is in the MOVIE
+# timescale from mvhd; media_time is in the TRACK's own timescale from mdhd.
+# Firefox 140.8.0esr divides segment_duration by the track timescale instead of
+# the movie one, so a delay of 1418 ticks at movie timescale 1000 -- 1.418 s --
+# is applied as 1418/24000 = 0.059 s and the picture runs 1.359 s ahead of the
+# sound. ffmpeg, ffprobe and mpv all read it correctly, so the file looks fine
+# everywhere except a browser. Measured here 2026-09-16 against the real file
+# and against a synthetic control with a different timescale pair:
+#
+#   file                   empty edit   correct   Firefox   error
+#   real clip              1418 @ 1000   1.418s   0.0591s   -1.359s
+#   control (mdhd 12800)   2000 @ 1000   2.000s   0.1563s   -1.844s
+#
+# Where the empty edit comes from: a stream-copy trim with -ss placed AFTER -i.
+# Output seeking cuts audio at the requested instant but video at the next
+# keyframe, and the gap becomes an empty edit. Measured on a 5 s GOP:
+#
+#   ffmpeg -ss 11 -i in.mp4 -t 20 -c copy out.mp4   no empty edit
+#   ffmpeg -i in.mp4 -ss 11 -t 20 -c copy out.mp4   4.015 s empty edit
+#
+# So trim with -ss BEFORE -i. This script then handles whatever still arrives:
+# a source whose picture starts after its sound gets the delay baked in as real
+# black frames (setpts + tpad), which keeps the movie timeline identical, puts
+# both tracks at zero, and leaves no edit list for anyone to misread. Verified:
+# the same excerpt reports buffered.start(0) = 0.059083 from the old path and
+# 0 from this one, with the picture at t=2s/5s/10s unchanged either way.
+
 die()  { echo "ERROR: $*" >&2; exit 1; }
 note() { echo "  $*"; }
 
@@ -147,6 +177,20 @@ duration() {
     echo "${d:-0}"
 }
 
+# Seconds by which the picture starts after the sound; negative when the sound
+# is the late one; empty when they agree to within a millisecond. ffprobe's
+# start_time already has the source's edit list applied, so this is the real
+# presentation offset rather than a raw media timestamp.
+start_skew() {
+    local f="$1" v a
+    v="$(probe -select_streams v:0 -show_entries stream=start_time -of csv=p=0 "$f" | head -1)"
+    a="$(probe -select_streams a:0 -show_entries stream=start_time -of csv=p=0 "$f" | head -1)"
+    case "${v:-}" in ""|N/A) v=0 ;; esac
+    case "${a:-}" in ""|N/A) a=0 ;; esac
+    awk -v v="$v" -v a="$a" \
+        'BEGIN{ d=v-a; e=(d<0?-d:d); if (e>0.001) printf "%.6f", d }'
+}
+
 # True when the file is already what this script would produce, so re-running
 # over a library is a no-op rather than another generation of transcode loss.
 already_conforming() {
@@ -164,6 +208,11 @@ already_conforming() {
         [ -z "$c" ] && continue
         [ "$c" = "aac" ] || return 1
     done <<<"$(audio_codecs "$f")"
+
+    # A file whose picture starts after its sound carries an empty edit (see
+    # EDIT LISTS). It matches on every other axis, so without this the library
+    # would skip it forever instead of healing it on the next run.
+    [ -z "$(start_skew "$f")" ] || return 1
 
     # A conforming h264/aac mp4 that is still 5.1 has work left to do.
     if [ "$STEREO" -eq 1 ]; then
@@ -348,6 +397,19 @@ convert_file() {
     filter="$(build_filter "$iw" "$ih" "$sar")" || filter=""
     [ -n "$crop" ] && chain="$crop"
     [ -n "$filter" ] && chain="${chain:+$chain,}$filter"
+    # See EDIT LISTS. setpts first, so tpad's black frames land at zero and the
+    # picture returns to exactly the movie time it had before.
+    local skew; skew="$(start_skew "$INPUT")"
+    if [ -n "$skew" ]; then
+        if awk -v s="$skew" 'BEGIN{exit !(s>0)}'; then
+            note "picture starts ${skew}s after sound; baking that in as black frames"
+            chain="${chain:+$chain,}setpts=PTS-STARTPTS,tpad=start_duration=${skew}:color=black"
+        else
+            note "WARNING: sound starts ${skew#-}s after picture -- left as an empty edit"
+            note "         on the audio track, which Firefox will mis-scale (see EDIT LISTS)"
+        fi
+    fi
+
     [ -n "$chain" ] && vf_args=(-vf "$chain")
 
     # -map 0:v:0, not -map 0:v. Matroska rips routinely carry cover art as a
