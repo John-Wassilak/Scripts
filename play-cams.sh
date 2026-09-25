@@ -12,7 +12,7 @@
 # pinentry-curses needs this to find the terminal; harmless if already exported
 export GPG_TTY=${GPG_TTY:-$(tty)}
 
-NVR_PASS=$(pass show nvr/admin) || {
+NVR_PASS=$(pass-auto show nvr/admin) || {
 	echo "play-cams: could not read nvr/admin from pass" >&2
 	exit 1
 }
