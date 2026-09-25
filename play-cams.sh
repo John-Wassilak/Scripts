@@ -8,6 +8,19 @@
 #       _sub in the url is 'fluent' (lowest quality)
 #       _ext in the url is 'balanced' (mid quality)
 #       _main in the url is 'clear' (high quality"
+#
+# usage: play-cams.sh [--bloomberg]
+#   --bloomberg   also open the bloomberg live stream (via play-stream.sh) and
+#                 tile it in with the cams
+
+BLOOMBERG=0
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		--bloomberg) BLOOMBERG=1; shift ;;
+		-h|--help)   sed -n '/^# usage:/,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+		*) echo "play-cams: unknown option $1" >&2; exit 2 ;;
+	esac
+done
 
 # pinentry-curses needs this to find the terminal; harmless if already exported
 export GPG_TTY=${GPG_TTY:-$(tty)}
@@ -82,7 +95,7 @@ MPV_ARGS=(
 	# feed and needs a rerun.
 	--stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5
 
-	--script="$HOME/scripts/mpv/periodic-end-jump.lua"
+	--script="$HOME/Scripts/mpv/periodic-end-jump.lua"
 	--script-opts=endjump=yes,interval=600
 
 	--osc=no
@@ -95,13 +108,27 @@ MPV_ARGS=(
 # "channel<n>" part has to stay.
 TITLE_PREFIX="cam channel"
 
-declare -A CAM_PID=()
+# every window we wait on and tile, keyed by its exact title
+WINDOWS=()
+declare -A WIN_PID=()
 
 for i in "${CHANNELS[@]}"; do
 	nohup mpv "${MPV_ARGS[@]}" --title="${TITLE_PREFIX}${i}" \
 	  "http://192.168.0.189/flv?app=bcs&stream=channel${i}_sub.bcs&token=$token_name" > /dev/null 2>&1 &
-	CAM_PID[$i]=$!
+	WINDOWS+=("${TITLE_PREFIX}${i}")
+	WIN_PID["${TITLE_PREFIX}${i}"]=$!
 done
+
+# bloomberg keeps its audio and the stock mpv.conf settings, so none of
+# MPV_ARGS applies. play-stream.sh execs mpv, so $! is the mpv pid. the title
+# carries no digits, which puts it in the last cell when tile-cams.sh sorts.
+if [ "$BLOOMBERG" -eq 1 ]; then
+	BLOOMBERG_TITLE="cam bloomberg"
+	nohup "$HOME/Scripts/play-stream.sh" "$HOME/Scripts/streams/bloomberg.strm" \
+	  --title="$BLOOMBERG_TITLE" > /dev/null 2>&1 &
+	WINDOWS+=("$BLOOMBERG_TITLE")
+	WIN_PID["$BLOOMBERG_TITLE"]=$!
+fi
 
 # kill -0 is not enough on its own: these are our own background children and
 # nothing here calls wait, so an exited mpv sits as an unreaped zombie that
@@ -119,28 +146,28 @@ cam_running() {
 
 # mpv only maps its window once the stream starts decoding, and the reolink
 # feeds take their time, so a fixed sleep is either too short or wasted. every
-# channel resolves one of two ways instead: its window maps, or its mpv exits
+# window resolves one of two ways instead: its window maps, or its mpv exits
 # (which is what a camera that is not there looks like -- the stream fails and
-# mpv quits). wait until every channel has done one or the other, so a missing
+# mpv quits). wait until every window has done one or the other, so a missing
 # camera costs no delay at all rather than the full timeout.
 #
 # the timeout only covers the third case, an mpv that stays alive without ever
 # mapping a window.
 wait_for_cams() {
 	local timeout=$1
-	local start=$SECONDS i pending mapped dead
+	local start=$SECONDS w pending mapped dead
 
 	while :; do
 		pending=(); mapped=0; dead=0
 
-		for i in "${CHANNELS[@]}"; do
+		for w in "${WINDOWS[@]}"; do
 			if [ "$(xdotool search --onlyvisible \
-			         --name "^${TITLE_PREFIX}${i}$" 2>/dev/null | wc -l)" -gt 0 ]; then
+			         --name "^${w}$" 2>/dev/null | wc -l)" -gt 0 ]; then
 				mapped=$((mapped + 1))
-			elif ! cam_running "${CAM_PID[$i]}"; then
+			elif ! cam_running "${WIN_PID[$w]}"; then
 				dead=$((dead + 1))
 			else
-				pending+=("$i")
+				pending+=("$w")
 			fi
 		done
 
@@ -150,7 +177,7 @@ wait_for_cams() {
 		fi
 
 		if [ $((SECONDS - start)) -ge "$timeout" ]; then
-			echo "play-cams: $mapped up, $dead did not start, still waiting on channel(s) ${pending[*]} after ${timeout}s; tiling anyway" >&2
+			echo "play-cams: $mapped up, $dead did not start, still waiting on: ${pending[*]} after ${timeout}s; tiling anyway" >&2
 			return 1
 		fi
 
@@ -165,4 +192,4 @@ else
 	sleep "${TILE_DELAY:-30}"
 fi
 
-"$HOME/scripts/tile-cams.sh" --fit -L
+"$HOME/Scripts/tile-cams.sh" --fit -L

@@ -9,6 +9,8 @@
 #        ex. https://URL.m3u8|User-Agent=Browser_like_User-Agent_String&Referer=https://www.referer.com/
 #     2. Youtube live streams. Structured for kodi, specifically, which requires a plugin:
 #        ex. plugin://plugin.video.youtube/play/?video_id=YT_VID_ID
+#
+# anything after the .strm file is passed through to mpv, e.g. --title=...
 
 if [[ $# -lt 1 ]]
 then
@@ -16,14 +18,15 @@ then
     exit 1
 else
     FILENAME=$1
+    shift
 fi
 
 
 if grep -q "plugin://plugin.video.youtube/" "$FILENAME"; then
     VID=$(grep -oP '(?<=video_id=)[^&]+' "$FILENAME")
-    mpv https://youtu.be/$VID
+    exec mpv "$@" https://youtu.be/$VID
 else
-    mpv  "`cat $FILENAME | sed 's/|.*//g'`" \
+    exec mpv "$@" "`cat $FILENAME | sed 's/|.*//g'`" \
      --user-agent="Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0" \
      --http-header-fields="Referer: `cat $FILENAME | sed 's/.*Referer=//g'`"
 fi
