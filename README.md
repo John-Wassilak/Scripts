@@ -23,6 +23,7 @@ on my laptop
   /etc/systemd/scripts/iptables, which `agent-built-lfs` generates.
 - [mount-crypt.sh](mount-crypt.sh) : decrypt/mount encrypted partition
 - [mount-ssh.sh](mount-ssh.sh) : mount remote drives via ssh
+- [vnc-server.sh](vnc-server.sh) : opens server's desktop in TigerVNC over wireguard, password from pass-auto (`vnc/server`). Menu entry in desktop-files.
 - [gentoo-cleanup-files.sh](gentoo-cleanup-files.sh) : clean gentoo cache
 - [gentoo-update.sh](gentoo-update.sh) : gentoo update commands
 

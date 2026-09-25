@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Server Desktop
+GenericName=Remote Desktop
+Comment=View and control server's display over WireGuard (VNC)
+Exec=/home/john/Scripts/vnc-server.sh
+Icon=vnc-server
+Terminal=false
+Type=Application
+StartupWMClass=vncviewer
+Categories=Network;RemoteAccess;
