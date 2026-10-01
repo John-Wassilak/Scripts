@@ -33,9 +33,10 @@
 # ts-input, ts-forward and ts-postrouting, plus the jumps into them. Every tailnet
 # connection to this box rides `INPUT -j ts-input`, so a flush cuts the tailnet until
 # tailscaled reinstalls its own rules, which it does on its own schedule rather than
-# immediately. apply therefore ends with `systemctl try-restart tailscaled`, which forces
-# that reinstall. A one-off addition is better done with a single `iptables -A` and a
-# matching edit here -- no flush, nothing else disturbed.
+# immediately. The same flush deletes dockerd's DOCKER-* chains. apply therefore ends
+# with `systemctl try-restart tailscaled docker`, which forces both to reinstall. A
+# one-off addition is better done with a single `iptables -A` and a matching edit here
+# -- no flush, nothing else disturbed.
 
 set -uo pipefail
 
@@ -201,6 +202,25 @@ RULES=(
 # statement is narrower than the old one: this host's *firewall* imposes nothing on the
 # tailnet, the enforcement was living in a policy someone can change in a web console,
 # and shields-up moves it onto this device where it is visible.
+
+# ---------------------------------------------------------------------------------
+# Not ours either: dockerd, 2026-10-01
+# ---------------------------------------------------------------------------------
+# dockerd creates DOCKER, DOCKER-USER, DOCKER-FORWARD and friends (filter and nat, v4
+# and v6) and jumps into them from FORWARD. Like tailscaled's, they are skipped by check.
+# FORWARD policy stays DROP; dockerd's own chains accept traffic for its bridges only.
+#
+# dockerd sets net.ipv4.ip_forward=1 when it starts. That flips accept_redirects from
+# OR to AND (the inetdevice.h note above), which is still 0 with conf.all=0, so the
+# posture holds. IPv6 stays blocked, so containers get no v6.
+#
+# Boot order, which is what makes the generated script's flush safe: iptables.service is
+# Before=network-pre.target (tailscaled is after it) and docker.service is
+# After=iptables.service. Both orderings come from ~/agent-built-lfs
+# (recipes/blfs-iptables-unit.sh, recipes/blfs-moby.sh). Before 2026-10-01 the firewall
+# had only After=network.target, raced tailscaled for the xtables lock, and lost: the
+# unit failed with half its rules in. A manual `systemctl restart iptables` still
+# flushes both daemons' chains; follow it with `systemctl try-restart tailscaled docker`.
 
 # ---------------------------------------------------------------------------------
 # IPv6: blocked entirely, 2026-09-09
@@ -369,8 +389,8 @@ check() {
         fi
     done
 
-    # Live rules in the three built-in chains, minus the jumps tailscaled owns.
-    live_rules=$($IPT -S 2>/dev/null | grep -E '^-A (INPUT|FORWARD|OUTPUT) ' | grep -v -- '-j ts-')
+    # Live rules in the three built-in chains, minus the jumps tailscaled and dockerd own.
+    live_rules=$($IPT -S 2>/dev/null | grep -E '^-A (INPUT|FORWARD|OUTPUT) ' | grep -v -E -- '-j (ts-|DOCKER)')
     live_count=$(grep -c . <<< "${live_rules:-}")
     [[ -z "$live_rules" ]] && live_count=0
     doc_count=${#RULES[@]}
@@ -403,12 +423,12 @@ check() {
             fail=1
         fi
     done
-    live_count=$($IP6T -S | grep -c '^-A')
+    live_count=$($IP6T -S | grep '^-A' | grep -v -E -- '^-A DOCKER|-j DOCKER' | grep -c .)
     if [[ "$live_count" -eq "${#RULES6[@]}" ]]; then
         printf "  ok      %s live v6 rule(s), %s documented\n" "$live_count" "${#RULES6[@]}"
     else
         printf "  DIFFERS %s live v6 rule(s), %s documented:\n" "$live_count" "${#RULES6[@]}"
-        $IP6T -S | grep '^-A' | sed 's/^/            /'
+        $IP6T -S | grep '^-A' | grep -v -E -- '^-A DOCKER|-j DOCKER' | sed 's/^/            /'
         fail=1
     fi
 
@@ -423,6 +443,7 @@ check() {
 
     echo "== not checked =="
     echo "  tailscale chains ($($IPT -S | grep -c '^-A ts-') rule(s) in ts-input/ts-forward)"
+    echo "  docker chains ($($IPT -S | grep -c -E '^-A DOCKER') v4, $($IP6T -S | grep -c -E '^-A DOCKER') v6 rule(s) in DOCKER-*)"
 
     if [[ $fail -eq 0 ]]; then
         echo
@@ -439,7 +460,7 @@ check() {
 apply() {
     need_root apply "$@"
     if [[ "${1:-}" != "--force" ]]; then
-        echo "apply flushes the IPv4 filter and nat tables, which deletes tailscaled's" >&2
+        echo "apply flushes the IPv4 filter and nat tables, which deletes tailscaled's and dockerd's" >&2
         echo "chains along with everything else, and reloads only what is in this file." >&2
         echo "This file is a copy of the generated script, not the source of it." >&2
         echo "Re-run with: $0 apply --force" >&2
@@ -480,11 +501,14 @@ apply() {
         $IP6T -A "${spec[@]}"
     done
 
-    # Puts back what the flush above took from tailscaled.
-    if systemctl is-active --quiet tailscaled; then
-        systemctl try-restart tailscaled
-        echo "tailscaled restarted to reinstall its chains."
-    fi
+    # Puts back what the flush above took from tailscaled and dockerd.
+    local u
+    for u in tailscaled docker; do
+        if systemctl is-active --quiet "$u"; then
+            systemctl try-restart "$u"
+            echo "$u restarted to reinstall its chains."
+        fi
+    done
 
     echo "applied. $(check >/dev/null 2>&1 && echo 'check passes.' || echo 'check does NOT pass -- run: '"$0"' check')"
 }
