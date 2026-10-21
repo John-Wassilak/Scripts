@@ -4,6 +4,7 @@
 # then crafts a url by convention and opens via mpv
 
 # note, assumes you saved nvr admin pass in pass as 'nvr/admin'
+#       (read through pass-auto where it is installed, plain pass otherwise)
 #       assumes nvr ip is mapped to the hostname 'nvr'
 #       _sub in the url is 'fluent' (lowest quality)
 #       _ext in the url is 'balanced' (mid quality)
@@ -25,7 +26,12 @@ done
 # pinentry-curses needs this to find the terminal; harmless if already exported
 export GPG_TTY=${GPG_TTY:-$(tty)}
 
-NVR_PASS=$(pass-auto show nvr/admin) || {
+# the laptop has pass-auto; server only has plain pass (its pass-auto is an
+# interactive alias, which a script never sees)
+PASS_CMD=pass
+command -v pass-auto >/dev/null && PASS_CMD=pass-auto
+
+NVR_PASS=$("$PASS_CMD" show nvr/admin) || {
 	echo "play-cams: could not read nvr/admin from pass" >&2
 	exit 1
 }
