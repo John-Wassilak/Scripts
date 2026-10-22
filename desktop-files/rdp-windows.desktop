@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Windows VM (RDP)
+GenericName=Remote Desktop
+Comment=View and control the Windows VM on server over WireGuard (RDP)
+Exec=/home/john/Scripts/rdp-windows.sh
+Icon=rdp-windows
+Terminal=false
+Type=Application
+StartupWMClass=rdp-windows
+Categories=Network;RemoteAccess;
