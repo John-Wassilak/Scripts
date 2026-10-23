@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Kali Desktop (VNC)
+GenericName=Remote Desktop
+Comment=View and control the Kali desktop on server over WireGuard (VNC)
+Exec=/home/john/Scripts/vnc-kali.sh
+Icon=vnc-kali
+Terminal=false
+Type=Application
+StartupWMClass=vncviewer
+Categories=Network;RemoteAccess;

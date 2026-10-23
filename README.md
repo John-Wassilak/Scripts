@@ -25,6 +25,7 @@ on my laptop
 - [mount-crypt.sh](mount-crypt.sh) : decrypt/mount encrypted partition, then start Docker containers labeled `crypt.autostart=1`
 - [mount-ssh.sh](mount-ssh.sh) : mount remote drives via ssh
 - [vnc-server.sh](vnc-server.sh) : opens server's desktop in TigerVNC over wireguard, password from pass-auto (`vnc/server`). Menu entry in desktop-files.
+- [vnc-kali.sh](vnc-kali.sh) : opens the kali desktop at 10.0.0.4:5902 in TigerVNC over wireguard, password from pass (`vnc/kali`). Menu entry in desktop-files.
 - [rdp-windows.sh](rdp-windows.sh) : opens the windows VM on server in FreeRDP's SDL client (`sdl-freerdp`) at 10.0.0.4:3389 over wireguard, password from pass (`win11/Windows`). Menu entry in desktop-files.
 - [gentoo-cleanup-files.sh](gentoo-cleanup-files.sh) : clean gentoo cache
 - [gentoo-update.sh](gentoo-update.sh) : gentoo update commands
