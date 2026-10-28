@@ -18,6 +18,7 @@
     echo /dynamic-resolution
     echo /gfx
     echo /clipboard
+    echo /sound:sys:alsa
     echo -grab-keyboard
     echo /wm-class:rdp-windows
     for arg in "$@"; do
